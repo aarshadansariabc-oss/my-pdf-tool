@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NanoPDF — Pro Compression Tool</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+  :root {
+    --primary: #4F46E5; --primary-dark: #4338ca;
+    --glass: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --text: #1e293b; --muted: #64748b;
+    --bg-gradient: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+  }
+  [data-theme="dark"] {
+    --primary: #818cf8; --primary-dark: #6366f1;
+    --glass: rgba(15, 23, 42, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text: #f8fafc; --muted: #94a3b8;
+    --bg-gradient: linear-gradient(120deg, #0f172a 0%, #1e1b4b 100%);
+  }
+
+  * { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+  body {
+    margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg-gradient); color: var(--text);
+    min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+  }
+
+  /* Glass Container */
+  .app-container {
+    width: 100%; max-width: 950px;
+    background: var(--glass);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+    position: relative; overflow: hidden;
+  }
+
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+  .logo { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+  .logo i { color: var(--primary); }
+  
+  .theme-btn {
+    background: rgba(0,0,0,0.05); border: none; cursor: pointer;
+    padding: 10px; border-radius: 50%; color: var(--text); font-size: 18px;
+  }
+  .theme-btn:hover { background: rgba(0,0,0,0.1); transform: rotate(15deg); }
+
+  /* Tabs */
+  .tabs {
+    display: inline-flex; background: rgba(0,0,0,0.04);
+    padding: 6px; border-radius: 16px; margin-bottom: 25px;
+  }
+  .tab {
+    padding: 10px 24px; border-radius: 12px; border: none;
+    background: transparent; color: var(--muted); font-weight: 600;
+    cursor: pointer; font-size: 14px;
+  }
+  .tab.active { background: var(--primary); color: white; shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+
+  /* Grid */
+  .main-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 40px; }
+  
+  /* Upload Area */
+  .dropzone {
+    border: 2px dashed var(--glass-border); background: rgba(255,255,255,0.2);
+    border-radius: 20px; padding: 40px; text-align: center; cursor: pointer;
+    position: relative; overflow: hidden;
+  }
+  .dropzone:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .dropzone.active { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); }
+  .icon-box {
+    width: 64px; height: 64px; background: #e0e7ff; color: var(--primary);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin: 0 auto 16px;
+  }
+
+  /* Controls */
+  .controls-card { margin-top: 24px; }
+  .input-group { margin-bottom: 20px; }
+  label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+  
+  .range-wrap { display: flex; align-items: center; gap: 15px; }
+  input[type=range] { flex: 1; accent-color: var(--primary); cursor: pointer; }
+  .badge { background: var(--primary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+
+  .text-input {
+    width: 100%; padding: 12px 16px; border-radius: 12px;
+    border: 1px solid var(--glass-border); background: rgba(255,255,255,0.4);
+    font-family: inherit; color: var(--text); outline: none;
+  }
+  .text-input:focus { border-color: var(--primary); background: rgba(255,255,255,0.7); }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%; padding: 16px; border: none; border-radius: 14px;
+    background: var(--primary); color: white; font-weight: 700; font-size: 16px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4); margin-top: 10px;
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Stats Card */
+  .stats-panel {
+    background: rgba(255,255,255,0.3); border-radius: 20px; padding: 24px;
+    border: 1px solid var(--glass-border);
+  }
+  .stat-item { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 14px; }
+  .stat-item strong { color: var(--text); }
+  .divider { height: 1px; background: var(--glass-border); margin: 16px 0; }
+  
+  .download-btn {
+    display: block; width: 100%; padding: 14px; text-align: center;
+    background: #10b981; color: white; border-radius: 12px; text-decoration: none;
+    font-weight: 700; margin-top: 15px; animation: popIn 0.3s ease;
+  }
+  @keyframes popIn { from{opacity:0; transform:scale(0.9);} to{opacity:1; transform:scale(1);} }
+
+  /* Toast */
+  .toast-container { position: fixed; top: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 10px; }
+  .toast {
+    background: var(--glass); backdrop-filter: blur(10px); padding: 16px 20px;
+    border-radius: 12px; border-left: 4px solid var(--primary);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px;
+    animation: slideIn 0.3s ease; min-width: 300px;
+  }
+  .toast.error { border-left-color: #ef4444; }
+  .toast.success { border-left-color: #10b981; }
+  @keyframes slideIn { from{transform:translateX(100%); opacity:0;} to{transform:translateX(0); opacity:1;} }
+
+  /* Responsive */
+  @media(max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="header">
+      <div class="logo"><i class="fa-solid fa-bolt"></i> NanoPDF</div>
+      <button class="theme-btn" id="themeBtn"><i class="fa-solid fa-moon"></i></button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="compress">Compress</button>
+      <button class="tab" data-tab="resize">Resize (Target Size)</button>
+    </div>
+
+    <div class="main-grid">
+      <div class="left-col">
+        
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept="application/pdf" hidden>
+          <div class="icon-box"><i class="fa-solid fa-file-pdf"></i></div>
+          <h3 style="margin:0 0 8px 0">Drag PDF here</h3>
+          <p style="margin:0; font-size:13px; color:var(--muted)">or click to browse (Max 100MB)</p>
+        </div>
+
+        <div id="compressControls" class="controls-card">
+          <div class="input-group">
+            <label>Compression Strength</label>
+            <div class="range-wrap">
+              <span style="font-size:13px; color:var(--muted)">Light</span>
+              <input type="range" id="qualityRange" min="10" max="100" value="75">
+              <span style="font-size:13px; color:var(--muted)">Heavy</span>
+            </div>
+            <div style="margin-top:8px; font-size:13px; color:var(--primary)">
+              Est. Quality: <span id="qualityVal" style="font-weight:700">75</span>%
+              <span style="float:right; color:var(--muted)" id="estSize">-</span>
+            </div>
+          </div>
+          <button id="compressBtn" class="btn-primary"><i class="fa-solid fa-minimize"></i> Compress PDF</button>
+        </div>
+
+        <div id="resizeControls" class="controls-card hidden">
+          <div class="input-group">
+            <label>Target File Size</label>
+            <div style="display:flex; gap:12px;">
+              <input type="number" id="resizeValue" class="text-input" placeholder="e.g. 200" style="flex:2">
+              <select id="resizeUnit" class="text-input" style="flex:1">
+                <option value="KB">KB</option>
+                <option value="MB">MB</option>
+              </select>
+            </div>
+            <p style="font-size:12px; color:var(--muted); margin-top:8px">
+              We will resize dimensions until it fits: <strong id="resizePreview">0 KB</strong>
+            </p>
+          </div>
+          <button id="resizeBtn" class="btn-primary"><i class="fa-solid fa-expand"></i> Resize PDF</button>
+        </div>
+
+      </div>
+
+      <div class="right-col">
+        <div class="stats-panel">
+          <h4 style="margin:0 0 20px 0">File Details</h4>
+          
+          <div class="stat-item">
+            <span>File Name</span>
+            <strong id="fileName" style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">-</strong>
+          </div>
+          
+          <div class="stat-item">
+            <span>Original Size</span>
+            <strong id="origSize">-</strong>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="stat-item">
+            <span>New Size</span>
+            <strong id="finalSize" style="color:var(--primary)">-</strong>
+          </div>
+
+          <div class="stat-item">
+             <span>Status</span>
+             <strong id="statusText">Waiting</strong>
+          </div>
+
+          <div id="progressWrap" style="display:none; margin-top:15px">
+            <div style="height:6px; background:rgba(0,0,0,0.05); border-radius:10px; overflow:hidden;">
+              <div id="progressBar" style="height:100%; width:0%; background:var(--primary); transition:width 0.3s;"></div>
+            </div>
+          </div>
+
+          <div id="downloadArea"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let currentFile = null;
+
+  // --- TOAST NOTIFICATION SYSTEM ---
+  function showToast(msg, type = 'normal') {
+    const container = $('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `
+      <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}"></i>
+      <span>${msg}</span>
+    `;
+    container.appendChild(el);
+    setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(), 300) }, 3000);
+  }
+
+  // --- THEME ---
+  const themeBtn = $('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    themeBtn.innerHTML = isDark ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+  });
+
+  // --- TABS ---
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('compressControls').classList.toggle('hidden', t.dataset.tab !== 'compress');
+    $('resizeControls').classList.toggle('hidden', t.dataset.tab !== 'resize');
+  }));
+
+  // --- DRAG & DROP ---
+  const dropzone = $('dropzone');
+  const handleFile = (f) => {
+    if(!f || f.type !== 'application/pdf') return showToast('Only PDF files allowed', 'error');
+    currentFile = f;
+    $('fileName').textContent = f.name;
+    $('origSize').textContent = (f.size/1024).toFixed(1) + ' KB';
+    $('finalSize').textContent = '-';
+    $('downloadArea').innerHTML = '';
+    dropzone.style.borderColor = 'var(--primary)';
+    showToast('File loaded successfully', 'success');
+    updateEstimate();
+  };
+  
+  dropzone.addEventListener('click', () => $('fileInput').click());
+  $('fileInput').addEventListener('change', e => handleFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('active'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('active'));
+  dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('active'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+  // --- ESTIMATION ---
+  const updateEstimate = () => {
+    const val = $('qualityRange').value;
+    $('qualityVal').textContent = val;
+    if(currentFile) {
+       const min = (currentFile.size/1024) * (val/100 * 0.5);
+       const max = (currentFile.size/1024) * (val/100 * 1.1);
+       $('estSize').textContent = `~${Math.round(min)}-${Math.round(max)} KB`;
+    }
+  };
+  $('qualityRange').addEventListener('input', updateEstimate);
+
+  // --- RESIZE PREVIEW ---
+  const updateResize = () => {
+    const v = $('resizeValue').value;
+    const u = $('resizeUnit').value;
+    let kb = u === 'MB' ? v * 1024 : v;
+    $('resizePreview').textContent = kb ? `${Number(kb).toLocaleString()} KB` : '0 KB';
+  };
+  $('resizeValue').addEventListener('input', updateResize);
+  $('resizeUnit').addEventListener('change', updateResize);
+
+  // --- MAIN PROCESS ---
+  async function processFile(endpoint, formData) {
+    if(!currentFile) return showToast('Please upload a PDF first', 'error');
+    
+    $('progressWrap').style.display = 'block';
+    $('progressBar').style.width = '10%';
+    $('statusText').textContent = 'Uploading...';
+    $('compressBtn').disabled = true;
+    $('resizeBtn').disabled = true;
+
+    try {
+      const res = await fetch(endpoint, { method: 'POST', body: formData });
+      $('progressBar').style.width = '60%';
+      $('statusText').textContent = 'Processing...';
+      
+      if(!res.ok) throw new Error('Processing failed');
+      
+      const blob = await res.blob();
+      const finalKb = res.headers.get('X-Final-KB') || (blob.size/1024).toFixed(1);
+      
+      $('progressBar').style.width = '100%';
+      $('statusText').textContent = 'Completed!';
+      $('finalSize').textContent = finalKb + ' KB';
+      
+      // Download Link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NanoPDF_${currentFile.name}`;
+      a.className = 'download-btn';
+      a.innerHTML = `<i class="fa-solid fa-download"></i> Download (${finalKb} KB)`;
+      $('downloadArea').appendChild(a);
+
+      showToast('Task Completed!', 'success');
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+
+    } catch (e) {
+      console.error(e);
+      showToast('Server Error or Timeout', 'error');
+      $('statusText').textContent = 'Failed';
+    } finally {
+      $('compressBtn').disabled = false;
+      $('resizeBtn').disabled = false;
+    }
+  }
+
+  $('compressBtn').addEventListener('click', () => {
+    const fd = new FormData();
+    fd.append('pdf', currentFile);
+    fd.append('quality', $('qualityRange').value);
+    processFile('/compress', fd);
+  });
+
+  $('resizeBtn').addEventListener('click', () => {
+    const fd = new FormData();
+    fd.append('pdf', currentFile);
+    const v = $('resizeValue').value;
+    const u = $('resizeUnit').value;
+    const kb = u === 'MB' ? v * 1024 : v;
+    if(!kb) return showToast('Enter target size', 'error');
+    fd.append('targetKb', kb);
+    processFile('/resize', fd);
+  });
+
+})();
+</script>
+</body>
+</html>
