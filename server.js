@@ -33,7 +33,8 @@ const GS_EXEC = process.platform === "win32" ? "gswin64c" : "gs";
  */
 function runGs(args) {
   try {
-    const res = spawnSync(GS_EXEC, args, { encoding: "utf8", windowsHide: true, timeout: 120000 });
+    // Timeout ko 120000 (2 min) se badhakar 300000 (5 min) kar do
+    const res = spawnSync(GS_EXEC, args, { encoding: "utf8", windowsHide: true, timeout: 300000 });
     return { code: res.status, stdout: res.stdout, stderr: res.stderr };
   } catch (err) {
     return { code: 1, stdout: "", stderr: String(err) };
@@ -224,4 +225,5 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}/tool.html`);
   console.log(`Using Ghostscript: ${GS_EXEC}`);
+
 });
